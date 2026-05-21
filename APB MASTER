@@ -1,0 +1,137 @@
+module APB_master(PCLK,PRST_N,transfer,addr_in,data_in,read_write,strobe,protect,done,error,SLAVE_DATA,PSELX,PADDR,PWRITE,PENABLE,PWDATA,PREADY,PRDATA,PSTRB,PPROT,PSLVRR);
+  parameter ADDR_width = 32;
+  parameter DATA_width = 32;
+  input PCLK,PRST_N,transfer,read_write;
+  input [3:0] strobe;
+  input [2:0] protect;
+  input [ADDR_width - 1 :0] addr_in;
+  input [DATA_width - 1 :0] data_in;
+  input PREADY,PSLVRR;
+  input  [DATA_width - 1:0] SLAVE_DATA;
+  output reg [ADDR_width - 1:0] PADDR;
+  output reg [DATA_width - 1:0]PWDATA,PRDATA;
+  output reg [3:0] PSTRB;
+  output reg [2:0] PPROT;
+  output reg PWRITE,PENABLE,PSELX;
+  output reg done,error;
+  parameter IDLE = 2'b00,SETUP = 2'b01,ACCESS = 2'b10;
+  
+  reg [1:0] present_state,next_state;
+  
+//   assign done = (PREADY) ? 1'b1 : 1'b0; // done signal
+//   assign error = (PREADY && PSLVRR) ? 1'b1 : 1'b0;   //error signal
+  
+  
+  always@(posedge PCLK)    // reset logic
+  begin
+    if(!PRST_N)
+        present_state <= IDLE;
+    else
+      present_state <= next_state;
+  end
+  
+  
+  always@(*)      // present-state next-state logic
+    begin
+      case(present_state)
+        IDLE:
+          begin
+            if(transfer)
+              next_state = SETUP;
+          
+             else
+               next_state = IDLE;
+          end
+        SETUP:
+          begin
+           next_state = ACCESS;
+          end
+        
+        ACCESS :
+          begin
+            if(PREADY)
+              next_state = (transfer) ? SETUP : IDLE;
+            else
+              next_state = ACCESS;
+          end
+        default : next_state = IDLE;
+      endcase
+    end
+  
+  
+  
+  always@(*)    // output logic
+    begin
+      case(present_state)
+        IDLE:
+          begin
+            PENABLE = 1'b0;
+            PSELX = 1'b0;
+            PADDR = 32'd0;
+            PWDATA = 32'd0;
+            PRDATA = 32'd0;
+            PWRITE = 1'b0;
+            PSTRB = 4'b0000;
+            PPROT = 3'b000;
+            done = 1'b0;
+            error = 1'b0;
+          end
+        SETUP:
+          begin
+            PENABLE = 1'b0;
+            PSELX = 1'b1;
+            PPROT = protect;
+            done = 1'b0;
+            error = 1'b0;
+            if(!read_write)
+              begin
+                PWRITE = 1'b0;
+                PADDR  = addr_in;
+                PSTRB = 4'b0000;
+              end
+            else if(read_write)
+               begin
+                PWRITE = 1'b1;
+                PADDR  = addr_in; 
+                PWDATA = data_in;
+                PSTRB = strobe;
+              end
+          end
+        ACCESS:
+          begin
+            PENABLE = 1'b1;
+             PSELX   = 1'b1;
+             PADDR   = addr_in;
+             PWRITE  = read_write;
+             PWDATA  = data_in;
+             PSTRB   = strobe;
+             PPROT   = protect;
+            if(PREADY)
+              begin
+                done = 1'b1;
+                error = PSLVRR; 
+                if(!read_write)
+                  PRDATA = SLAVE_DATA;
+                else
+                  PRDATA = 32'd0;
+              end
+            else
+              begin
+                done = 1'b0;
+                error = PSLVRR;
+              end
+          end
+        default : 
+          begin
+            PENABLE = 1'b0;
+            PSELX = 1'b0;
+            PADDR = 32'd0;
+            PWDATA = 32'd0;
+            PWRITE = 1'b0;
+            PSTRB = 4'b0000;
+            PPROT = 3'b000;
+            PRDATA = 32'd0;
+          end
+      endcase
+    end
+endmodule
