@@ -1,0 +1,24 @@
+module top(PCLK,PRST_N,APB_ADDR,APB_WDATA,APB_RDATA,APB_READ_WRITE,APB_ENABLE,APB_PSEL,APB_TRANSFER,APB_STROBE,APB_PROTECT,APB_DONE,APB_ERROR);
+  parameter ADDR_WIDTH = 32;
+  parameter DATA_WIDTH = 32;
+  parameter MEMORY_DEPTH = 256;
+  input PCLK,PRST_N,APB_READ_WRITE,APB_TRANSFER;
+  input [3:0] APB_STROBE;
+  input [2:0] APB_PROTECT;
+  input [ADDR_WIDTH - 1 :0]APB_ADDR;
+  input [DATA_WIDTH-1 :0]APB_WDATA;
+  output [DATA_WIDTH -1 :0]APB_RDATA;
+  output APB_DONE,APB_ERROR,APB_ENABLE,APB_PSEL;
+  wire [DATA_WIDTH -1 :0]slave_data_out;
+  wire [ADDR_WIDTH - 1 :0] ms_addr;
+  wire slave_sel,read_write,ms_enable,ms_ready,pslvrr;
+  wire [DATA_WIDTH -1 :0] ms_wdata;
+  wire [3:0] strobe;
+  wire [2:0] protect;
+  assign APB_ENABLE = ms_enable;
+  assign APB_PSEL = slave_sel;
+  APB_master #(.ADDR_width(ADDR_WIDTH),.DATA_width(DATA_WIDTH) ) dut1(.PCLK(PCLK),.PRST_N(PRST_N),.transfer(APB_TRANSFER),.addr_in(APB_ADDR),.data_in(APB_WDATA),.read_write(APB_READ_WRITE),.strobe(APB_STROBE),.protect(APB_PROTECT), .done(APB_DONE),.error(APB_ERROR),.SLAVE_DATA(slave_data_out),.PSELX(slave_sel),.PADDR(ms_addr),.PWRITE(read_write),.PENABLE(ms_enable),.PWDATA(ms_wdata),.PREADY(ms_ready),.PRDATA(APB_RDATA),.PSTRB(strobe),.PPROT(protect),.PSLVRR(pslvrr));
+  
+  APB_slave #(.ADDR_WIDTH(ADDR_WIDTH),.DATA_WIDTH(DATA_WIDTH),.memory_depth(MEMORY_DEPTH)) dut2(.PCLK(PCLK),.PRST_N(PRST_N),.PSELX(slave_sel),.PADDR(ms_addr),.PWDATA(ms_wdata),.PRDATA(slave_data_out),.PWRITE(read_write),.PENABLE(ms_enable),.PREADY(ms_ready),.PSTRB(strobe),.PPROT(protect),.PSLVRR(pslvrr));
+  
+endmodule
