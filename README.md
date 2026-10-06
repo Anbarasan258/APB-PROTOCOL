@@ -1,1 +1,1 @@
-# APB-PROTOCOL WITH UVM TB ARCHITECTURE
+# AMBA APB Master-Slave RTL design with UVM verification environment
