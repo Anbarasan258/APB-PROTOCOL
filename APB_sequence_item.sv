@@ -1,6 +1,6 @@
 class APB_sequence_item extends uvm_sequence_item;
   `uvm_object_utils(APB_sequence_item)
-  
+
   rand logic APB_READ_WRITE,APB_TRANSFER,PRST_N;
   rand logic [3:0] APB_STROBE;
   rand logic [2:0] APB_PROTECT;
