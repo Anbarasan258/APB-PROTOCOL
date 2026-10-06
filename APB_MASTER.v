@@ -15,7 +15,7 @@ module APB_master(PCLK,PRST_N,transfer,addr_in,data_in,read_write,strobe,protect
   output reg PWRITE,PENABLE,PSELX;
   output reg done,error;
   parameter IDLE = 2'b00,SETUP = 2'b01,ACCESS = 2'b10;
-  
+
   reg [1:0] present_state,next_state;
   
 //   assign done = (PREADY) ? 1'b1 : 1'b0; // done signal
